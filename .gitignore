@@ -1,5 +1,7 @@
 # Dependency directories
 venv/
+__pycache__
+.idea
 # Environment
 .env
 # Raw Data Backup
