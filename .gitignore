@@ -1,0 +1,6 @@
+# Dependency directories
+venv/
+# Environment
+.env
+# Raw Data Backup
+data/
