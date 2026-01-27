@@ -1,1 +1,1 @@
-Market Scraper with Finage API 
+A Monte Carlo Simulator with Finage API scraper
