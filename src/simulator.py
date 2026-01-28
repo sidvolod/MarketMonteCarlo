@@ -21,3 +21,32 @@ def generate_price_paths (stats: dict, days: int, iterations: int):
 
     price_paths = last_price * np.cumprod(daily_change, axis=1)
     price_paths = np.hstack((np.full((iterations,1),last_price), price_paths))
+    return price_paths
+
+def get_final_stats (price_matrix, start_price):
+    """
+        Analyses the price matrix and returns the final statistics.
+
+    Args:
+        price_matrix (np.ndarray): matrix of prices from Monte Carlo simulations.
+        start_price (float): starting price.
+
+    Returns:
+        (dict): dictionary with final statistics.
+    """
+
+    final_price = price_matrix[:, -1]
+    mean = np.mean(final_price)
+    std_dev = np.std(final_price)
+
+    # When we applied .greater it returned a True/False matrix
+    # when we applied .mean to resulting matrix we converted Boolean values
+    # to 1s and 0s and mean calculated sum of 1s (success)/ all cases
+    # giving us the probability of success
+    probability_of_profit = np.mean(np.greater(final_price, start_price))
+
+    return {
+        "mean": mean,
+        "probability_of_profit": probability_of_profit,
+        "std_dev": std_dev,
+    }
