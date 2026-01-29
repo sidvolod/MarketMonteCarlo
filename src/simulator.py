@@ -50,3 +50,27 @@ def get_final_stats (price_matrix, start_price):
         "probability_of_profit": probability_of_profit,
         "std_dev": std_dev,
     }
+
+def calculate_var (price_matrix, start_price):
+    """
+        Calculates the Value at Risk (VaR) of the price
+        and Conditional Value at Risk (CVar) showing if the price
+        goes below fifth percentile on average how bad is it.
+        Utilizes generally accepted threshold of 5th percentile
+
+    Args:
+        price_matrix (np.ndarray): matrix of prices from Monte Carlo simulations.
+        start_price (float): starting price.
+    Returns:
+        (dict): a dicitonary containing 'var' and 'cvar' values.
+    """
+    final_price = price_matrix[:, -1]
+    fifth_perc = np.percentile(final_price, 5)
+
+    worst_case = np.mean(final_price[final_price < fifth_perc])
+
+
+    return {
+        "var": start_price - fifth_perc,
+        "cvar": start_price - worst_case,
+    }
