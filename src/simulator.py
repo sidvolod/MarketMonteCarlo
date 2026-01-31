@@ -74,3 +74,18 @@ def calculate_var (price_matrix, start_price):
         "var": start_price - fifth_perc,
         "cvar": start_price - worst_case,
     }
+def get_average_maximum_drawdown (price_matrix):
+
+    drawdowns = np.maximum.accumulate(price_matrix, axis=1) - price_matrix
+    maximum_drawdown = np.max(drawdowns, axis=1)
+    average_worst_drawdown = np.percentile(maximum_drawdown, 95)
+    return average_worst_drawdown
+
+def validity_check (len_history, len_simulation):
+
+    if len_simulation > 0.5 * len_history:
+        return "Critical: Not enough historical data for simulation of this length"
+    elif len_simulation > 0.3 * len_history:
+        return "Warning: Simulation duration is long relative to historical data"
+    else:
+        return "Safe"
