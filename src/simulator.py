@@ -76,8 +76,13 @@ def calculate_var (price_matrix, start_price):
     }
 def get_average_maximum_drawdown (price_matrix):
 
-    drawdowns = np.maximum.accumulate(price_matrix, axis=1) - price_matrix
-    maximum_drawdown = np.max(drawdowns, axis=1)
+def _calculate_drawdown_matrix (price_matrix):
+    peaks = np.maximum.accumulate(price_matrix, axis=1)
+    percentage_drawdowns = (peaks - price_matrix)/peaks
+    return percentage_drawdowns
+
+def get_average_maximum_drawdown (percentage_drawdowns):
+    maximum_drawdown = np.max(percentage_drawdowns, axis=1)
     average_worst_drawdown = np.percentile(maximum_drawdown, 95)
     return average_worst_drawdown
 
