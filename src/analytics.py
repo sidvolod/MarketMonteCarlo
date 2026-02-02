@@ -19,16 +19,17 @@ class Analytics:
                 start_price (float): start price of simulation
                 len_history (int): length of data used for simulations
                 let_simulation (int): amount of simulated timeframes
-                _drawdown_cache (Ndarray): cache for drawdown matrix
                 annual_periods (int): number of datapoints that make up one year
-
+                _drawdown_cache (Ndarray): cache for drawdown matrix
+                _log_return_cache (Ndarray): cache for log return matrix
         """
         self.price_matrix = price_matrix
         self.start_price = price_matrix[0, 0]
         self.len_history = len_history
         self.len_simulation = price_matrix.shape[1]-1
-        self._drawdown_cache = None
         self.annual_periods = annual_periods
+        self._drawdown_cache = None
+        self._log_return_cache = None
 
     def get_final_stats (self):
         """
@@ -62,7 +63,7 @@ class Analytics:
             Returns:
                 volatility (float): annualized volatility.
         """
-        log_returns = np.diff(np.log(self.price_matrix), axis=1)
+        log_returns = self._calculate_log_return_matrix()
         volatility = np.std(log_returns)
         return volatility * np.sqrt(self.annual_periods)
 
@@ -104,6 +105,11 @@ class Analytics:
             self._drawdown_cache = (peaks - self.price_matrix)/peaks
         return self._drawdown_cache
 
+    def _calculate_log_return_matrix (self):
+        if self._log_return_cache is None:
+            self._log_return_cache = np.diff(np.log(self.price_matrix), axis=1)
+        return self._log_return_cache
+
     def get_average_maximum_drawdown (self):
         """
             Calculates average maximum drawdown of the price matrix.
@@ -127,6 +133,42 @@ class Analytics:
         squared_mean_drawdown = np.mean(np.square(drawdown), axis=1)
         return np.mean(np.sqrt(squared_mean_drawdown))
 
+    def get_expected_sharpe_ratio(self, risk_free_rate):
+        """
+            Calculates the expected Sharpe Ratio of the simulations
+
+            Returns:
+                expected_sharpe_ratio (float): expected Sharpe Ratio
+                                               of the simulations
+        """
+        period_return = self._calculate_log_return_matrix()
+        rf_rate_period = np.log(1 + risk_free_rate) / self.annual_periods
+        std_dev = np.std(period_return)
+        mean = np.mean(period_return)
+        sharpe_ratio = (mean - rf_rate_period) / std_dev
+
+        return sharpe_ratio * np.sqrt(self.annual_periods)
+
+    def get_expected_sortino_ratio(self, risk_free_rate):
+        """
+            Calculates the expected Sortino Ratio of the simulations
+
+            Returns:
+                expected_sortino_ratio (float): expected Sortino Ratio
+        """
+        rf_rate_period = np.log(1 + risk_free_rate) / self.annual_periods
+        period_return = self._calculate_log_return_matrix()
+
+        excess_return = period_return - rf_rate_period
+        downside_returns = np.where(excess_return < 0, excess_return, 0)
+        root_mean_square_return = np.sqrt(np.mean(np.square(downside_returns)))
+        mean = np.mean(period_return)
+        if root_mean_square_return == 0:
+            return 0
+        sortino_ratio = (mean - rf_rate_period) / root_mean_square_return
+
+        return sortino_ratio * np.sqrt(self.annual_periods)
+
     def validity_check (self):
         """
             Checks if the length of history is enough to simulate the future
@@ -148,7 +190,7 @@ class Analytics:
             result["reason"] = ""
             return result
 
-    def get_summary (self):
+    def get_summary (self, risk_free_rate = 0.04):
         """
             Returns summary statistics of the Monte-Carlo simulation.
 
@@ -180,5 +222,7 @@ class Analytics:
                 "value_at_risk_pct": float(risk["var_pct"]),
                 "conditional_var_dollar": float(risk["cvar_dollar"]),
                 "conditional_var_pct": float(risk["cvar_pct"]),
+                "sortino_ratio": float(self.get_expected_sortino_ratio(risk_free_rate)),
+                "sharpe_ratio": float(self.get_expected_sharpe_ratio(risk_free_rate))
             }
         }
