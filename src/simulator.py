@@ -1,22 +1,21 @@
 import numpy as np
 
 class MonteCarloSimulator:
-    def __init__(self, stats: dict, days: int, iterations: int):
+    def __init__(self, stats: dict, days: int, iterations: int, seed: int):
         self.stats = stats
         self.days = days
         self.iterations = iterations
-
-    def generate_price_paths (self):
+        self.seed: int = None
+    def generate_price_paths (self) -> np.ndarray:
         """
             Generates a matrix of simulated future price paths by
             applying principles of Geometric Brownian Motion (GBM).
-        Args:
-            stats (dict): Dictionary with statistics of the data with keys:
-                mu: mean, sigma: standard deviation, and last price.
+
         Returns:
             np.ndarray: a 2-dimensional matrix of shape (iterations X days+1).
         """
-
+        if self.seed is not None:
+            np.random.seed(self.seed)
         mu = self.stats["mu"]
         sigma = self.stats["sigma"]
         last_price = self.stats["last price"]

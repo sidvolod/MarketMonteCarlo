@@ -1,4 +1,7 @@
+from dataclasses import dataclass
+@dataclass
 class Ticker:
+
     """
     Financial ticker and its configuration for the Finage API.
 
@@ -11,16 +14,13 @@ class Ticker:
         to_date (str): End date of data collection (format YYYY-MM-DD).
 
     """
-    def __init__(self, symbol, asset_type, from_date,
-                 to_date, multiplier=1,timespan="day"):
+    symbol: str
+    asset_type: str
+    from_date: str
+    to_date: str
+    multiplier: int = 1
+    timespan: str = "day"
 
-        self.symbol = symbol.upper()
-        self.asset_type = asset_type.lower()
-        self.multiplier = multiplier
-        self.timespan = timespan
-
-        self.from_date = from_date
-        self.to_date = to_date
 
     def get_api_url_endpoint(self):
         """
@@ -33,7 +33,3 @@ class Ticker:
 
         return (f"{base_url}/{self.symbol}/{self.multiplier}/"
                 f"{self.timespan}/{self.from_date}/{self.to_date}")
-
-    def __str__(self):
-        return f"Ticker Object: {self.symbol} ({self.asset_type})"
-

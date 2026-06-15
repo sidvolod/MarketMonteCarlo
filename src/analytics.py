@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-def calculate_analytics(data : pd.DataFrame):
+def calculate_analytics(data : pd.DataFrame) -> dict:
     log_returns = np.log(data["Close"]/data["Close"].shift(1)).dropna()
     return {
         "mu": log_returns.mean(),
@@ -10,15 +10,14 @@ def calculate_analytics(data : pd.DataFrame):
     }
 
 class Analytics:
-    def __init__(self, price_matrix, len_history, annual_periods = 252):
+    def __init__(self, price_matrix : np.Ndarray, len_history : int, annual_periods = 252):
         """
             Constructor for initialization of Analytics object.
-
             Parameters:
                 price_matrix (np.Ndarray): price matrix of our simulations
                 start_price (float): start price of simulation
                 len_history (int): length of data used for simulations
-                let_simulation (int): amount of simulated timeframes
+                len_simulation (int): amount of simulated timeframes
                 annual_periods (int): number of datapoints that make up one year
                 _drawdown_cache (Ndarray): cache for drawdown matrix
                 _log_return_cache (Ndarray): cache for log return matrix
@@ -31,7 +30,7 @@ class Analytics:
         self._drawdown_cache = None
         self._log_return_cache = None
 
-    def get_final_stats (self):
+    def get_final_stats (self) -> dict:
         """
             Analyses the price matrix and returns the final statistics.
             Consists of mean, probability of profit and final spread
@@ -56,7 +55,7 @@ class Analytics:
             "std_dev": std_dev,
         }
 
-    def get_annualized_volatility(self):
+    def get_annualized_volatility(self) -> float:
         """
             Calculates the annualized volatility.
 
@@ -67,7 +66,7 @@ class Analytics:
         volatility = np.std(log_returns)
         return volatility * np.sqrt(self.annual_periods)
 
-    def get_risk_metrics (self):
+    def get_risk_metrics (self) -> dict:
         """
             Calculates the Value at Risk (VaR) of the price
             and Conditional Value at Risk (CVar) showing if the price
@@ -93,7 +92,7 @@ class Analytics:
             "cvar_pct": cvar_pct,
         }
 
-    def _calculate_drawdown_matrix (self):
+    def _calculate_drawdown_matrix (self) -> np.ndarray:
         """
             A helper function to calculate drawdown matrix.
 
@@ -105,12 +104,18 @@ class Analytics:
             self._drawdown_cache = (peaks - self.price_matrix)/peaks
         return self._drawdown_cache
 
-    def _calculate_log_return_matrix (self):
+    def _calculate_log_return_matrix (self) -> np.ndarray:
+        """
+            A helper function to calculate log returns.
+
+            Returns:
+                log_return_matrix (np.Ndarray): log difference matrix
+        """
         if self._log_return_cache is None:
             self._log_return_cache = np.diff(np.log(self.price_matrix), axis=1)
         return self._log_return_cache
 
-    def get_average_maximum_drawdown (self):
+    def get_average_maximum_drawdown (self) -> float:
         """
             Calculates average maximum drawdown of the price matrix.
             Returns:
@@ -121,19 +126,19 @@ class Analytics:
         average_worst_drawdown = np.percentile(maximum_drawdown, 95)
         return average_worst_drawdown
 
-    def get_ulcer_index (self):
+    def get_ulcer_index (self) -> float:
         """
             Calculates Ulcer index of the price matrix.
             A metric representing how long and deep are the drawdowns
 
             Returns:
-                ulcer_index (int): ulcer index of the price matrix
+                ulcer_index (float): ulcer index of the price matrix
         """
         drawdown = self._calculate_drawdown_matrix()
         squared_mean_drawdown = np.mean(np.square(drawdown), axis=1)
         return np.mean(np.sqrt(squared_mean_drawdown))
 
-    def get_expected_sharpe_ratio(self, risk_free_rate):
+    def get_expected_sharpe_ratio(self, risk_free_rate) -> float:
         """
             Calculates the expected Sharpe Ratio of the simulations
 
@@ -149,7 +154,7 @@ class Analytics:
 
         return sharpe_ratio * np.sqrt(self.annual_periods)
 
-    def get_expected_sortino_ratio(self, risk_free_rate):
+    def get_expected_sortino_ratio(self, risk_free_rate) -> float:
         """
             Calculates the expected Sortino Ratio of the simulations
 
@@ -169,7 +174,7 @@ class Analytics:
 
         return sortino_ratio * np.sqrt(self.annual_periods)
 
-    def validity_check (self):
+    def validity_check (self) -> dict:
         """
             Checks if the length of history is enough to simulate the future
 
@@ -190,7 +195,22 @@ class Analytics:
             result["reason"] = ""
             return result
 
-    def get_summary (self, risk_free_rate = 0.04):
+    def get_cagr (self) -> float | None:
+        """
+            Calculates expected Compound Annual growth rate
+
+            Returns:
+                cagr (float): expected Compound Annual growth rate
+        """
+        years = self.len_simulation / self.annual_periods
+        if years > 1:
+            ending_price = self.get_final_stats()["mean"]
+            starting_price = self.start_price
+            return (ending_price/starting_price)**(1/years) - 1
+        return None
+
+
+    def get_summary (self, risk_free_rate = 0.04) -> dict:
         """
             Returns summary statistics of the Monte-Carlo simulation.
 
@@ -202,6 +222,7 @@ class Analytics:
         risk = self.get_risk_metrics()
         validity = self.validity_check()
         volatility = self.get_annualized_volatility()
+        cagr = self.get_cagr() if self.get_cagr() is not None else "Not relevant"
         return {
             "metadata" : {
                 "start_price": float(self.start_price),
@@ -223,6 +244,7 @@ class Analytics:
                 "conditional_var_dollar": float(risk["cvar_dollar"]),
                 "conditional_var_pct": float(risk["cvar_pct"]),
                 "sortino_ratio": float(self.get_expected_sortino_ratio(risk_free_rate)),
-                "sharpe_ratio": float(self.get_expected_sharpe_ratio(risk_free_rate))
+                "sharpe_ratio": float(self.get_expected_sharpe_ratio(risk_free_rate)),
+                "cagr": cagr
             }
         }

@@ -8,3 +8,8 @@ __pycache__
 .env
 # Raw Data Backup
 data/
+# logs
+logs.txt
+*.log
+# generated chart
+simulation_results.png
