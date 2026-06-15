@@ -25,6 +25,7 @@ Run the engine directly from the terminal. For example, to simulate 10,000 futur
 
     python main.py --symbol AAPL --asset stock --start_date 2023-01-01 --end_date 2024-01-01 --iterations 10000 --days 252
 <img src="assets/example_chart.png" width="375">
+
 ---
 
 ## 🏗️ System Architecture
