@@ -24,7 +24,7 @@ Set up your environment variables by creating a `.env` file in the root director
 Run the engine directly from the terminal. For example, to simulate 10,000 future paths for Apple stock over the next 252 trading days based on historical data:
 
     python main.py --symbol AAPL --asset stock --start_date 2023-01-01 --end_date 2024-01-01 --iterations 10000 --days 252
-<img src="example_chart.png" width="600">
+<img src="assets/example_chart.png" width="375">
 ---
 
 ## 🏗️ System Architecture
